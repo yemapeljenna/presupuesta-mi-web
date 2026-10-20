@@ -110,7 +110,7 @@ export function PanelPresupuesto() {
         </div>
       </header>
 
-      <main className="grid flex-1 items-start gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <main className="grid flex-1 items-start gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:content-start lg:items-stretch">
         <FormularioPresupuesto
           enviando={enviando}
           resultado={resultado}
@@ -120,7 +120,7 @@ export function PanelPresupuesto() {
           onReintentarTarifas={volverAComprobar}
           onEnviar={enviar}
         />
-        <aside className="lg:sticky lg:top-8">
+        <aside>
           <ResultadoPresupuesto
             presupuesto={
               resultado?.tipo === "ok" ? resultado.presupuesto : null

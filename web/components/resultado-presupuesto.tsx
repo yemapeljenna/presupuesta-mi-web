@@ -36,10 +36,18 @@ export function ResultadoPresupuesto({
     // key: con cada presupuesto nuevo el ticket se vuelve a montar y "sale impreso"
     <div
       key={referencia}
-      className="mx-auto w-full max-w-md animate-in duration-300 fade-in-0 slide-in-from-top-3 lg:max-w-none"
+      className="mx-auto w-full max-w-md animate-in duration-300 fade-in-0 slide-in-from-top-3 lg:flex lg:h-full lg:max-w-none lg:flex-col"
     >
-      <div aria-live="polite" aria-busy={enviando}>
-        <div className="rounded-t-xl border border-b-0 bg-card pb-6 ticket-muesca-abajo">
+      {/* En escritorio el ticket ocupa toda la altura de la columna: la parte de
+          arriba se estira y el total, la nota y el código de barras quedan
+          abajo. La tira en zigzag forma parte de esa altura, así que la punta
+          de los dientes coincide con el borde inferior del asistente. */}
+      <div
+        aria-live="polite"
+        aria-busy={enviando}
+        className="lg:flex lg:flex-1 lg:flex-col"
+      >
+        <div className="rounded-t-xl border border-b-0 bg-card pb-6 ticket-muesca-abajo lg:flex-1">
           <div className="flex flex-col gap-1.5 px-6 pt-7">
             <p className="text-xs font-semibold tracking-[0.25em] text-muted-foreground uppercase">
               Presupuesto
@@ -88,7 +96,7 @@ export function ResultadoPresupuesto({
 
         {/* Parte inferior: las muescas de las dos partes coinciden en la línea
           discontinua antes del total, como un ticket troquelado */}
-        <div className="border border-y-0 bg-card pb-6 ticket-muesca-arriba">
+        <div className="border border-y-0 bg-card pb-6 ticket-muesca-arriba lg:mt-auto">
           <div className="mx-6 mb-6 -translate-y-px border-t-2 border-dashed" />
 
           <div
