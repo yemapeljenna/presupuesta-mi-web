@@ -1,0 +1,24 @@
+# Dependencias (se generan con npm install a partir de package.json)
+node_modules/
+**/node_modules/
+
+# Compilación de Next.js (interfaz en web/)
+.next/
+**/.next/
+out/
+
+# Variables de entorno y credenciales (el ejemplo sí se sube)
+.env
+.env*.local
+!.env.example
+
+# Registros y archivos del sistema
+npm-debug.log*
+.DS_Store
+
+# Vercel
+.vercel
+
+# Archivos generados automáticamente por Next.js para herramientas de IA
+web/AGENTS.md
+web/CLAUDE.md
