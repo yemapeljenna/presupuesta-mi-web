@@ -43,7 +43,9 @@ La API arranca en el **puerto 3000**: `http://localhost:3000`
   - PowerShell: `$env:PORT=4000; npm start`
   - CMD: `set PORT=4000` y después `npm start`
 
-Las rutas GET se pueden abrir en el navegador (por ejemplo `http://localhost:3000/api/estado`). La ruta **POST no se prueba desde la barra del navegador**, porque el navegador solo hace peticiones GET al escribir una dirección. Para el POST se usa `curl` (ver más abajo) o un cliente HTTP como Postman o Thunder Client.
+**Comprobación rápida:** con la API arrancada, abre `http://localhost:3000/api/estado` en el navegador. Si ves `{"status":"ok"}`, la API funciona.
+
+Las rutas GET se pueden abrir en el navegador (por ejemplo `http://localhost:3000/api/tarifas`). La ruta **POST no se prueba desde la barra del navegador**, porque el navegador solo hace peticiones GET al escribir una dirección. Para el POST se usa `curl` (ver más abajo) o un cliente HTTP como Postman o Thunder Client.
 
 ## Pruebas automáticas
 
@@ -126,6 +128,12 @@ curl -i -X POST http://localhost:3000/api/presupuesto \
 
 ```
 curl -i -X POST http://localhost:3000/api/presupuesto -H "Content-Type: application/json" -d "{\"tipo\":\"corporativa\",\"paginas\":4,\"formulario\":true,\"segundoIdioma\":false}"
+```
+
+**PowerShell de Windows** (en PowerShell, `curl` es otro comando distinto; lo más sencillo es `Invoke-RestMethod`):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/presupuesto -ContentType "application/json" -Body '{"tipo":"corporativa","paginas":4,"formulario":true,"segundoIdioma":false}'
 ```
 
 Rutas GET:
@@ -293,3 +301,15 @@ La función `calcularPresupuesto()` de `src/calculo.js` recibe los datos ya vali
 
 - Las tarifas están en `src/tarifas.js` protegidas con `Object.freeze`, así que no se pueden modificar mientras el servidor está en marcha.
 - La validación devuelve solo los cuatro campos permitidos (`tipo`, `paginas`, `formulario` y `segundoIdioma`). Cualquier otra propiedad que envíe el cliente, como `total` o `precio`, se descarta antes de calcular (caso 12).
+
+---
+
+## Problemas frecuentes
+
+| Problema | Causa y solución |
+|---|---|
+| `npm` no se reconoce como comando | Node.js no está instalado. Instala Node.js 18 o superior y vuelve a abrir la terminal. |
+| `Error: listen EADDRINUSE ... :3000` | El puerto 3000 ya está ocupado (por ejemplo, la API ya está arrancada en otra terminal). Cierra esa terminal con `Ctrl + C` o arranca en otro puerto con la variable `PORT`. |
+| `Cannot find module 'express'` | Falta instalar las dependencias. Ejecuta `npm install` en la raíz del proyecto. |
+| El POST da error en PowerShell con `curl` | En PowerShell, `curl` no es el mismo programa. Usa el ejemplo con `Invoke-RestMethod` o abre CMD. |
+| La interfaz muestra "Sin conexión" | La API no está arrancada. Ejecuta `npm start` en la raíz (terminal 1) y pulsa la pastilla de estado para volver a comprobar. |
