@@ -36,7 +36,7 @@ export function ResultadoPresupuesto({
     // key: con cada presupuesto nuevo el ticket se vuelve a montar y "sale impreso"
     <div
       key={referencia}
-      className="mx-auto w-full max-w-[380px] animate-in duration-300 fade-in-0 slide-in-from-top-3 lg:mr-0"
+      className="mx-auto w-full max-w-md animate-in duration-300 fade-in-0 slide-in-from-top-3 lg:max-w-none"
     >
       <div aria-live="polite" aria-busy={enviando}>
         <div className="rounded-t-xl border border-b-0 bg-card pb-6 ticket-muesca-abajo">

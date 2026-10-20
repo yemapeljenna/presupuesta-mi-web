@@ -33,7 +33,7 @@ export function ListaPasos({
 }) {
   return (
     <nav aria-label="Pasos del presupuesto">
-      <ol className="flex items-center justify-between gap-2 md:flex-col md:items-stretch md:justify-start md:gap-1">
+      <ol className="flex items-center justify-between gap-2 lg:flex-col lg:items-stretch lg:justify-start lg:gap-1">
         {pasos.map((paso, indice) => {
           const Icono = paso.estado === "completado" ? CheckIcon : paso.icono
           const esActivo = indice === activo
@@ -45,9 +45,9 @@ export function ListaPasos({
                 disabled={!paso.accesible || esActivo}
                 aria-current={esActivo ? "step" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl p-1 text-left transition-colors duration-150 outline-none md:px-2.5 md:py-2",
+                  "flex w-full items-center gap-3 rounded-xl p-1 text-left transition-colors duration-150 outline-none lg:px-2.5 lg:py-2",
                   "focus-visible:ring-3 focus-visible:ring-ring/50 enabled:hover:bg-muted disabled:cursor-default",
-                  esActivo && "md:bg-muted"
+                  esActivo && "lg:bg-muted"
                 )}
               >
                 <span
@@ -65,17 +65,17 @@ export function ListaPasos({
                   <Icono aria-hidden />
                 </span>
                 {/* En móvil solo se ven los círculos; el texto queda para lectores de pantalla */}
-                <span className="sr-only flex-col md:not-sr-only md:flex">
+                <span className="sr-only flex-col lg:not-sr-only lg:flex">
                   <span
                     className={cn(
-                      "text-sm font-medium",
+                      "text-sm font-medium whitespace-nowrap",
                       esActivo && "font-semibold text-emphasis",
                       paso.estado === "error" && "text-destructive"
                     )}
                   >
                     {paso.titulo}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs whitespace-nowrap text-muted-foreground">
                     {paso.subtitulo}
                   </span>
                   {TEXTO_ESTADO[paso.estado] && (
