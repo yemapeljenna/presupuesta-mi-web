@@ -39,12 +39,12 @@ const TIPOS: { value: TipoWeb; nombre: string; descripcion: string }[] = [
   {
     value: "landing",
     nombre: "Landing",
-    descripcion: "Una página para presentar un producto o servicio.",
+    descripcion: "Una página de presentación.",
   },
   {
     value: "corporativa",
     nombre: "Web corporativa",
-    descripcion: "Sitio de empresa con varias secciones.",
+    descripcion: "Sitio con varias secciones.",
   },
 ]
 
@@ -251,7 +251,7 @@ export function FormularioPresupuesto({
     )
     const completado =
       indice === ULTIMO_PASO
-        ? resultado?.tipo === "ok"
+        ? alcanzado === ULTIMO_PASO && resultado?.tipo === "ok"
         : indice < alcanzado && pasoValido(indice)
     let estado: EstadoPaso = "pendiente"
     if (pasoConError(indice)) estado = "error"
@@ -273,20 +273,20 @@ export function FormularioPresupuesto({
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="overflow-hidden rounded-2xl border bg-card md:grid md:grid-cols-[220px_minmax(0,1fr)]"
+      className="flex flex-col overflow-hidden rounded-2xl border bg-card lg:min-h-[560px] lg:flex-row"
     >
-      <div className="border-b p-3 md:border-r md:border-b-0 md:p-4">
+      <div className="border-b p-3 lg:w-[260px] lg:shrink-0 lg:border-r lg:border-b-0 lg:p-4">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <ListaPasos pasos={pasos} activo={paso} onIr={irA} />
           </div>
-          <span className="text-xs whitespace-nowrap text-muted-foreground md:hidden">
+          <span className="text-xs whitespace-nowrap text-muted-foreground lg:hidden">
             Paso {paso + 1} de {PASOS.length}
           </span>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-6 p-5 sm:p-8">
+      <div className="flex min-w-0 flex-1 flex-col gap-6 p-5 sm:p-8 lg:p-10">
         {(errorTarifas || resultado?.tipo === "sin-conexion") && (
           <Alert variant="destructive">
             <UnplugIcon />
@@ -365,7 +365,7 @@ export function FormularioPresupuesto({
               <div
                 role="radiogroup"
                 aria-label="Tipo de web"
-                className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                className="grid grid-cols-1 gap-5 sm:grid-cols-2"
               >
                 {TIPOS.map((opcion) => (
                   <label
@@ -388,15 +388,15 @@ export function FormularioPresupuesto({
                       className="sr-only"
                     />
                     <span className="flex flex-col gap-1.5">
-                      <span className="font-semibold text-emphasis transition-colors duration-200 group-has-checked:text-primary-foreground">
+                      <span className="font-semibold whitespace-nowrap text-emphasis transition-colors duration-200 group-has-checked:text-primary-foreground">
                         {opcion.nombre}
                       </span>
                       <span className="text-sm text-muted-foreground transition-colors duration-200 group-has-checked:text-primary-foreground/80">
                         {opcion.descripcion}
                       </span>
                     </span>
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs text-muted-foreground transition-colors duration-200 group-has-checked:text-primary-foreground/80">
+                    <span className="flex flex-col gap-1">
+                      <span className="text-xs whitespace-nowrap text-muted-foreground transition-colors duration-200 group-has-checked:text-primary-foreground/80">
                         Precio base
                       </span>
                       <span className="font-heading text-2xl font-bold text-emphasis tabular-nums transition-colors duration-200 group-has-checked:text-primary-foreground">
@@ -409,7 +409,7 @@ export function FormularioPresupuesto({
             )}
 
             {paso === 1 && (
-              <div className="flex flex-col items-start gap-3">
+              <div className="flex flex-col items-center gap-4 rounded-xl border bg-background px-6 py-8">
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
@@ -534,7 +534,7 @@ export function FormularioPresupuesto({
           </Paso>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t pt-6">
+        <div className="mt-auto flex items-center justify-between gap-3 border-t pt-6">
           <Button
             type="button"
             variant="secondary"

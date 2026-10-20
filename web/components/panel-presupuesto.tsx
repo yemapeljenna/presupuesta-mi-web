@@ -94,7 +94,7 @@ export function PanelPresupuesto() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-5 sm:px-8">
+    <div className="mx-auto flex min-h-svh w-full max-w-[1440px] flex-col px-4 lg:px-8">
       <header className="flex flex-col gap-6 border-b pt-10 pb-8 sm:flex-row sm:items-end sm:justify-between sm:pt-14 sm:pb-10">
         <div className="flex flex-col gap-3">
           <h1 className="font-heading text-4xl font-bold tracking-tight text-emphasis sm:text-5xl">
@@ -110,7 +110,7 @@ export function PanelPresupuesto() {
         </div>
       </header>
 
-      <main className="grid flex-1 items-start gap-10 py-8 sm:py-10 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-14">
+      <main className="grid flex-1 items-start gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_420px]">
         <FormularioPresupuesto
           enviando={enviando}
           resultado={resultado}
@@ -133,7 +133,7 @@ export function PanelPresupuesto() {
       </main>
 
       <footer className="border-t py-6 text-xs text-muted-foreground">
-        Jennifer Paucara Mamani · DAW · 0613 Desarrollo web en entorno servidor
+        Jennifer Paucara · DAW · 0613 Desarrollo web en entorno servidor
       </footer>
     </div>
   )
