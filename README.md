@@ -1,6 +1,8 @@
 # Presupuesta mi web
 
-API REST hecha con **Node.js + Express** que calcula el presupuesto desglosado de un proyecto web. El servidor usa sus propias tarifas y nunca acepta precios ni totales enviados por el cliente. Incluye además una interfaz cliente opcional (carpeta `web/`) que consume la API.
+Aplicación **Next.js** que prepara presupuestos de proyectos web. El cliente describe su proyecto, un agente con **OpenAI** propone servicios del catálogo, el usuario los revisa (acepta, quita o añade) y descarga el presupuesto en **PDF**.
+
+La IA solo **propone y redacta**. La validación, los precios y los totales se calculan siempre en el servidor, en los Route Handlers de Next (`web/app/api/`), y nunca se aceptan importes enviados por el navegador.
 
 **Autora:** Jennifer Paucara Mamani · DAW · Módulo 0613 · IFP Hospitalet
 
@@ -8,170 +10,206 @@ API REST hecha con **Node.js + Express** que calcula el presupuesto desglosado d
 
 ## Resumen rápido
 
-| Parte | Carpeta | Instalar | Ejecutar | Puerto |
+| Carpeta | Instalar | Ejecutar | Pruebas | Puerto |
 |---|---|---|---|---|
-| API | raíz del proyecto | `npm install` | `npm start` | 3000 (`http://localhost:3000`) |
-| Interfaz (ampliación) | `web/` | `npm install` | `npm run dev` | 3001 (`http://localhost:3001`) |
+| `web/` | `npm install` | `npm run dev` | `npm test` | 3001 (`http://localhost:3001`) |
+
+Todo (interfaz y API) es **un solo proyecto de Next.js** en `web/`. Ya no hay servidor Express.
 
 ---
 
 ## Requisitos
 
-- [Node.js](https://nodejs.org/) 18 o superior (incluye `npm`).
+- [Node.js](https://nodejs.org/) **22 o superior** (lo exige el SDK `openai` v7).
+- Una clave de API de OpenAI, solo para generar propuestas con IA. Sin clave funcionan el modo manual, el cálculo y el PDF; el agente responde 502 con el mensaje "El servicio de IA no está configurado".
 
-## Instalación
+## Instalación y ejecución en local
 
 ```bash
 git clone https://github.com/yemapeljenna/presupuesta-mi-web.git
-cd presupuesta-mi-web
+cd presupuesta-mi-web/web
 npm install
-```
-
-La carpeta `node_modules` no se sube al repositorio. `npm install` la genera leyendo `package.json` (dependencias del proyecto) y `package-lock.json` (versiones exactas).
-
-## Ejecución
-
-```bash
-npm start
-```
-
-La API arranca en el **puerto 3000**: `http://localhost:3000`
-
-- Para pararla: `Ctrl + C` en la terminal.
-- Para usar otro puerto, se define la variable `PORT`:
-  - Bash: `PORT=4000 npm start`
-  - PowerShell: `$env:PORT=4000; npm start`
-  - CMD: `set PORT=4000` y después `npm start`
-
-**Comprobación rápida:** con la API arrancada, abre `http://localhost:3000/api/estado` en el navegador. Si ves `{"status":"ok"}`, la API funciona.
-
-Las rutas GET se pueden abrir en el navegador (por ejemplo `http://localhost:3000/api/tarifas`). La ruta **POST no se prueba desde la barra del navegador**, porque el navegador solo hace peticiones GET al escribir una dirección. Para el POST se usa `curl` (ver más abajo) o un cliente HTTP como Postman o Thunder Client.
-
-## Pruebas automáticas
-
-```bash
-npm test
-```
-
-Arranca la API en el puerto 3999, prueba las rutas GET y los casos de la tabla de pruebas, y muestra `[OK]` o `[FALLO]` en cada uno. No hace falta tener el servidor encendido.
-
----
-
-## Rutas
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/api/estado` | Comprueba que el servicio funciona. Responde `{"status":"ok"}` |
-| GET | `/api/tarifas` | Devuelve las tarifas que usa el servidor |
-| POST | `/api/presupuesto` | Valida la solicitud y devuelve el presupuesto desglosado |
-
-### POST /api/presupuesto
-
-Cabecera obligatoria: `Content-Type: application/json`
-
-**Cuerpo de ejemplo** (los cuatro campos son obligatorios):
-
-```json
-{
-  "tipo": "corporativa",
-  "paginas": 4,
-  "formulario": true,
-  "segundoIdioma": false
-}
-```
-
-| Campo | Tipo | Valores permitidos |
-|---|---|---|
-| `tipo` | texto | `"landing"` o `"corporativa"` |
-| `paginas` | número entero | de 1 a 20 |
-| `formulario` | booleano | `true` o `false` |
-| `segundoIdioma` | booleano | `true` o `false` |
-
-Las propiedades extra (por ejemplo `"total": 1`) se ignoran.
-
-**Respuesta correcta (200):**
-
-```json
-{
-  "base": 600,
-  "paginasAdicionales": 150,
-  "formulario": 80,
-  "segundoIdioma": 0,
-  "total": 830,
-  "moneda": "EUR"
-}
-```
-
-**Respuesta con error (400):** `campos` indica qué campos fallan y `detalles` explica el motivo. En este caso no se calcula nada.
-
-```json
-{
-  "error": "Solicitud no válida",
-  "campos": ["paginas"],
-  "detalles": ["El campo \"paginas\" debe ser un número entero entre 1 y 20."]
-}
-```
-
-### Ejemplos con curl
-
-La opción `-i` muestra también la cabecera de la respuesta, donde se ve el código de estado (200 o 400).
-
-**Bash, Git Bash, macOS o Linux:**
-
-```bash
-curl -i -X POST http://localhost:3000/api/presupuesto \
-  -H "Content-Type: application/json" \
-  -d '{"tipo":"corporativa","paginas":4,"formulario":true,"segundoIdioma":false}'
-```
-
-**CMD de Windows** (las comillas internas se escapan con `\"`):
-
-```
-curl -i -X POST http://localhost:3000/api/presupuesto -H "Content-Type: application/json" -d "{\"tipo\":\"corporativa\",\"paginas\":4,\"formulario\":true,\"segundoIdioma\":false}"
-```
-
-**PowerShell de Windows** (en PowerShell, `curl` es otro comando distinto; lo más sencillo es `Invoke-RestMethod`):
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/presupuesto -ContentType "application/json" -Body '{"tipo":"corporativa","paginas":4,"formulario":true,"segundoIdioma":false}'
-```
-
-Rutas GET:
-
-```bash
-curl -i http://localhost:3000/api/estado
-curl -i http://localhost:3000/api/tarifas
-```
-
----
-
-## Interfaz cliente (ampliación)
-
-En la carpeta `web/` hay una interfaz hecha con **Next.js y shadcn/ui** que consume la API. Muestra el estado del servicio, las tarifas de `GET /api/tarifas` integradas en cada opción y un asistente por pasos (tipo de web, páginas, extras y revisión) que envía la solicitud a `POST /api/presupuesto`. El resultado se muestra como un ticket con el desglose y el total.
-
-La interfaz **no calcula ningún precio**: todos los importes vienen de la API. Si la API responde 400, muestra los mensajes de `detalles` y marca el paso que tiene el error.
-
-Hacen falta **dos terminales**:
-
-**Terminal 1** (raíz del proyecto), API en `http://localhost:3000`:
-
-```bash
-npm install
-npm start
-```
-
-**Terminal 2**, interfaz en `http://localhost:3001`:
-
-```bash
-cd web
-npm install
+cp .env.example .env.local      # PowerShell: Copy-Item .env.example .env.local
+# edita .env.local y rellena OPENAI_API_KEY y OPENAI_MODEL
 npm run dev
 ```
 
-Después se abre `http://localhost:3001` en el navegador.
+Abre `http://localhost:3001`. Para producción en local: `npm run build` y `npm start`.
 
-- **URL de la API:** se lee de la variable `NEXT_PUBLIC_API_URL`. Si no existe, se usa `http://localhost:3000`. Hay un ejemplo en `web/.env.example`; para cambiarla se copia como `web/.env.local` y se edita el valor. Los archivos `.env` reales no se suben al repositorio.
-- **Modo claro / oscuro:** se cambia con la tecla `d` o con el botón de la cabecera.
+### Variables de entorno
+
+Son **solo de servidor**: no llevan el prefijo `NEXT_PUBLIC_`, así que Next nunca las incluye en el código del navegador. Solo las lee `web/app/api/agente/route.ts`.
+
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `OPENAI_API_KEY` | Sí (para el agente) | Clave de la API de OpenAI |
+| `OPENAI_MODEL` | Sí (para el agente) | Modelo que se usa (debe admitir salida estructurada con JSON schema) |
+| `OPENAI_TIMEOUT_MS` | No | Tiempo máximo de espera a OpenAI. Por defecto, 25000 ms |
+
+`web/.env.example` las lista sin valores. Los archivos `.env*` reales no se suben al repositorio (`.gitignore`). La variable `NEXT_PUBLIC_API_URL` de la versión anterior **ya no existe**: la interfaz llama a rutas relativas (`/api/...`) de la misma aplicación.
+
+---
+
+## Cómo funciona
+
+```
+Navegador (web/components)            Servidor (web/app/api, Route Handlers)
+─────────────────────────             ───────────────────────────────────────
+1. Cliente + descripción ───────────▶ POST /api/agente
+                                        ├─ valida (400 si vacío o demasiado largo)
+                                        ├─ OpenAI: Responses API + JSON schema estricto, timeout
+                                        └─ revalida: ids del catálogo, un solo tipo, páginas 1-20
+2. Revisa la propuesta  ◀───────────── { resumen, servicios[], tipo, paginas, dudas[], pendientes[] }
+   acepta / quita / añade
+   completa tipo y páginas ─────────▶ POST /api/presupuesto  (ticket en vivo)
+3. Vista previa del PDF ────────────▶ POST /api/presupuesto/pdf
+   y descarga                           └─ validarSolicitud + calcularPresupuesto (ignora importes)
+```
+
+No hay estado en memoria entre peticiones: el navegador envía en cada petición todo lo necesario (selección, resumen, dudas y pendientes). Por eso funciona en las funciones sin estado de Vercel.
+
+### El agente (`web/app/api/agente/route.ts`)
+
+Las instrucciones, el JSON schema y la llamada a OpenAI están en ese archivo.
+
+- **Salida estructurada:** `text.format` de tipo `json_schema` con `strict: true`. Campos: `resumen`, `servicios [{ id, justificacion }]` (con `id` limitado a los ids del catálogo), `tipo` y `paginas` (o `null` si no se deducen), `dudas[]` y `pendientes[]`.
+- **Instrucciones:** usar solo ids del catálogo; no inventar servicios, precios ni plazos; lo que no esté en el catálogo va a `pendientes`. Un formulario simple de reservas o citas es `formulario`; las reservas con disponibilidad o con pagos van a pendientes. El catálogo se describe al modelo **sin precios**.
+- **La descripción son datos:** se envía como un objeto JSON en el mensaje del usuario, separada de las instrucciones, y las instrucciones indican ignorar cualquier orden que contenga.
+- **Revalidación** (`web/lib/propuesta.ts`): aunque el schema ya limita los ids, la respuesta se vuelve a comprobar. Se descartan los ids que no estén en el catálogo y los repetidos, se deja un solo tipo de web, se anulan las páginas fuera de 1-20 y se recortan los textos. Los ids descartados se devuelven en `descartados`, y lo que falta por completar, en `faltan`.
+- **Timeout y errores:** se espera como máximo `OPENAI_TIMEOUT_MS` (se cancela la petición con `AbortSignal`), sin reintentos automáticos. Si falta la configuración, OpenAI da error, se agota el tiempo, el modelo rechaza la petición o la respuesta no es JSON, la ruta responde **502** con un mensaje claro y `"reintentar": true`. La interfaz muestra entonces el botón **Reintentar**. En el registro del servidor nunca aparece la clave.
+- `store: false`: OpenAI no guarda la conversación con los datos del cliente.
+
+### Catálogo y precios (`web/lib/`)
+
+| Archivo | Contenido |
+|---|---|
+| `tarifas.ts` | **Única** fuente de precios (congelada con `Object.freeze`) |
+| `catalogo.ts` | Servicios: `id`, `categoria` (tipo, extra o regla), `nombre`, `incluye` y `precio`, que se **lee** de `tarifas.ts` |
+| `validacion.ts` | `validarSolicitud()`, la misma validación que tenía la API Express |
+| `calculo.ts` | `calcularPresupuesto()`, separada de las rutas |
+| `propuesta.ts` | Validación de la entrada del agente y revalidación de la respuesta del modelo |
+| `pdf.ts` | Validación de los datos del PDF y generación con PDFKit |
+| `http.ts` | Lectura del JSON: exige `Content-Type`, limita el tamaño a 50 KB y responde 400 si el JSON está mal formado |
+| `api.ts` | Funciones del navegador que llaman a `/api/...` |
+
+---
+
+## Rutas (Route Handlers)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/estado` | `{"status":"ok"}` |
+| GET | `/api/tarifas` | Tarifas del servidor |
+| GET | `/api/catalogo` | Catálogo de servicios con precios (leídos de `tarifas.ts`) |
+| POST | `/api/presupuesto` | Valida `{ tipo, paginas, formulario, segundoIdioma }` y devuelve el desglose |
+| POST | `/api/agente` | `{ cliente, descripcion }` → propuesta de la IA revalidada |
+| POST | `/api/presupuesto/pdf` | Selección final → PDF recalculado en el servidor |
+
+Todas las rutas POST exigen `Content-Type: application/json`. Las propiedades extra (`"total"`, `"precios"`...) se ignoran.
+
+### POST /api/agente
+
+```json
+{ "cliente": "Clínica Sonrisa", "descripcion": "Web con inicio, servicios, equipo, blog y contacto, y un formulario para pedir cita." }
+```
+
+- `cliente`: obligatorio, máximo 120 caracteres. `descripcion`: obligatoria, máximo 4000 caracteres. Si no se cumple, **400** sin llamar a OpenAI.
+- **200:**
+
+```json
+{
+  "cliente": "Clínica Sonrisa",
+  "resumen": "Web corporativa para una clínica dental…",
+  "tipo": "corporativa",
+  "paginas": 5,
+  "servicios": [
+    { "id": "corporativa", "nombre": "Web corporativa", "incluye": "…", "justificacion": "Pide cinco secciones." },
+    { "id": "formulario", "nombre": "Formulario de contacto", "incluye": "…", "justificacion": "Quiere que pidan cita." }
+  ],
+  "dudas": [],
+  "pendientes": [],
+  "descartados": [],
+  "faltan": []
+}
+```
+
+- **502:** `{ "error": "No se ha podido generar la propuesta", "detalles": ["El servicio de IA ha tardado demasiado en responder.", "…"], "reintentar": true }`
+
+### POST /api/presupuesto/pdf
+
+```json
+{
+  "cliente": "Clínica Sonrisa",
+  "resumen": "Web corporativa para una clínica dental.",
+  "seleccion": { "tipo": "corporativa", "paginas": 6, "formulario": false, "segundoIdioma": true },
+  "dudas": ["¿Tiene ya dominio propio?"],
+  "pendientes": ["Sistema de reservas con pago online"]
+}
+```
+
+- `seleccion` se valida con **`validarSolicitud`** y se calcula con **`calcularPresupuesto`**, las mismas funciones que `POST /api/presupuesto`. Cualquier importe que envíe el cliente se ignora.
+- **200:** `application/pdf`, con la cabecera `X-Presupuesto-Total` (el total calculado). **400:** `campos` y `detalles` (por ejemplo, `seleccion.paginas`).
+- El PDF incluye cliente, fecha, resumen, servicios confirmados con su descripción e importe, desglose, total, aclaraciones (notas fijas y dudas) y pendientes.
+- `resumen`, `dudas` y `pendientes` llegan del navegador porque no hay estado en el servidor. Son solo texto (con límites de longitud) y nunca afectan a los importes.
+
+---
+
+## Librería de PDF: comparativa y elección
+
+Criterios: que siga mantenida, que funcione en un **Route Handler de Next.js** (runtime Node.js) desplegado en **Vercel** como función sin estado y que no pese demasiado. Versiones consultadas en npm en noviembre de 2026.
+
+| Librería | Última versión (npm) | Mantenimiento | Encaje en Route Handler + Vercel |
+|---|---|---|---|
+| **PDFKit** | 0.20.2 (sept. 2026) | Activo | JavaScript puro con APIs de Node (Buffer, streams). Ligera. Sus fuentes estándar se cargan como módulos JS, así que el trazado de archivos de Vercel las incluye. Con `serverExternalPackages: ["pdfkit"]`, Next la carga con `require` sin empaquetarla. |
+| pdf-lib | 1.17.1 (mayo 2022) | **Sin publicar desde hace más de 4 años** | Funcionaría, pero es arriesgado depender de una librería abandonada. Diseño de bajo nivel: el ajuste de líneas y los saltos de página se hacen a mano. |
+| @react-pdf/renderer | 4.9.0 (ago. 2026) | Activo | Encaja con React (`renderToBuffer`) y es una alternativa razonable. Es más pesada (motor de maquetación y fuentes propios) y, en el App Router, también suele necesitar configuración como paquete externo. Internamente usa su propia variante de PDFKit. |
+| jsPDF | 4.2.1 (mar. 2026) | Activo | Pensada sobre todo para el navegador. Generar el PDF en el cliente iría contra el requisito de recalcular en el servidor. En Node funciona, pero la maquetación de textos largos es más manual. |
+| Puppeteer | 25.16.0 (oct. 2026) | Activo | Necesita Chromium. En Vercel obliga a usar `puppeteer-core` + `@sparticuz/chromium`, se acerca al límite de 250 MB por función, tiene arranques en frío lentos y gasta más memoria. Es excesivo para un documento sencillo. |
+
+**Elección: PDFKit.** Se mantiene activamente, es ligera, no necesita navegador y ofrece texto con ajuste de línea, saltos de página y estilos suficientes para el presupuesto.
+
+Lo he comprobado en el Route Handler: `web/app/api/presupuesto/pdf/route.ts` declara `runtime = "nodejs"` (PDFKit no funciona en el runtime Edge) y `next.config.ts` la marca como `serverExternalPackages`. Con `npm run build` + `npm start`, la ruta devuelve el PDF correcto. Un presupuesto ocupa unos 3 KB, muy por debajo del límite de 4,5 MB de respuesta de las funciones de Vercel.
+
+Limitación conocida: las fuentes estándar del PDF (Helvetica) usan la codificación WinAnsi. Tildes, ñ, ¿, ¡ y € se ven bien; los emojis y los alfabetos no latinos se sustituyen por `?`. Para admitirlos habría que incrustar una fuente TTF con `doc.registerFont`.
+
+---
+
+## Interfaz
+
+En la cabecera se elige el modo:
+
+- **Asistente IA** (`components/asistente-ia.tsx`), en tres pasos:
+  1. **Proyecto:** nombre del cliente y descripción (con contador de caracteres). Si OpenAI falla, aparece el aviso con **Reintentar**.
+  2. **Propuesta:** resumen redactado por la IA, tipo de web y páginas (marcados como obligatorios si la IA no los ha deducido) y servicios extra. Cada servicio propuesto muestra su justificación y se puede **Aceptar** o **Quitar**; los del catálogo que no se han propuesto se pueden **Añadir**. También se muestran las dudas y los pendientes. No se avanza hasta completar el tipo, las páginas (1-20) y revisar todas las propuestas.
+  3. **Presupuesto PDF:** vista previa del PDF generado por el servidor, enlace para abrirlo en otra pestaña y botón **Descargar PDF**.
+- **Manual** (`components/formulario-presupuesto.tsx`): el asistente por pasos de la versión anterior.
+
+El ticket de la derecha se recalcula en el servidor (`POST /api/presupuesto`) cada vez que cambia la selección. La interfaz **no calcula ningún precio**. Modo claro/oscuro con la tecla `d` o con el botón de la cabecera.
+
+---
+
+## Despliegue en Vercel (un solo proyecto)
+
+1. Sube el repositorio a GitHub.
+2. En Vercel: **Add New → Project** e importa el repositorio.
+3. **Root Directory: `web`**. Vercel detecta Next.js; no hace falta cambiar los comandos de build.
+4. **Settings → Environment Variables**: añade `OPENAI_API_KEY` y `OPENAI_MODEL` (y, si quieres, `OPENAI_TIMEOUT_MS`) para Production y Preview. No se marcan como públicas.
+5. **Settings → Build and Deployment → Node.js Version: 22.x o superior** (`package.json` ya declara `"engines": { "node": ">=22" }`).
+6. **Deploy.** Comprueba `https://<tu-proyecto>.vercel.app/api/estado`.
+
+Con la CLI:
+
+```bash
+cd web
+npx vercel link            # Root Directory: web
+npx vercel env add OPENAI_API_KEY
+npx vercel env add OPENAI_MODEL
+npx vercel --prod
+```
+
+Si tenías los dos proyectos anteriores (API Express e interfaz), borra el de la API y quita la variable `NEXT_PUBLIC_API_URL` del proyecto de la interfaz.
+
+La ruta del agente declara `maxDuration = 60` segundos, que deja margen sobre el timeout de 25 s de OpenAI.
 
 ---
 
@@ -189,118 +227,96 @@ Después se abre `http://localhost:3001` en el navegador.
 
 ---
 
-## Estructura del proyecto
+## Pruebas automáticas
 
-```
-presupuesta-mi-web/
-├── package.json              # Dependencias y scripts (start, dev, test)
-├── package-lock.json         # Versiones exactas de las dependencias
-├── .gitignore                # Excluye node_modules, .next y archivos .env
-├── README.md
-├── src/                      # Código de la API
-│   ├── server.js             # Arranca el servidor (puerto)
-│   ├── app.js                # Configuración de Express y rutas
-│   ├── tarifas.js            # Tarifas del servidor (congeladas)
-│   ├── validacion.js         # Validación de la solicitud
-│   └── calculo.js            # Función de cálculo (separada de la ruta)
-├── pruebas/
-│   └── pruebas.js            # Pruebas automáticas (npm test)
-└── web/                      # Interfaz cliente (ampliación, Next.js)
-    ├── package.json
-    ├── package-lock.json
-    ├── .env.example          # Ejemplo de NEXT_PUBLIC_API_URL
-    ├── app/                  # Página, layout y estilos (globals.css)
-    ├── lib/api.ts            # Peticiones a la API
-    └── components/           # Componentes de la interfaz
-        ├── panel-presupuesto.tsx
-        ├── formulario-presupuesto.tsx
-        ├── lista-pasos.tsx
-        ├── resultado-presupuesto.tsx
-        ├── estado-servicio.tsx
-        ├── boton-tema.tsx
-        └── ui/               # Componentes de shadcn/ui
+```bash
+cd web
+npm test
 ```
 
----
+`web/pruebas/pruebas.ts` (se ejecuta con `tsx`) llama directamente a las funciones `GET` y `POST` de cada `route.ts` con objetos `Request` estándar, sin arrancar un servidor. **OpenAI está simulado**: se intercepta `fetch` hacia `api.openai.com`, así que se prueba la ruta real con el SDK real y no hace falta clave ni conexión. Muestra `[OK]` o `[FALLO]` en cada caso.
 
-## Tabla de pruebas
+### Cálculo (`POST /api/presupuesto`)
 
-Resultados obtenidos al ejecutar `npm test`. En los casos inválidos el resto de campos es correcto, para comprobar cada error por separado.
-
-### Rutas GET
-
-| Ruta | Resultado esperado | Resultado obtenido |
+| Caso | Solicitud | Esperado |
 |---|---|---|
-| GET `/api/estado` | 200 · `{"status":"ok"}` | 200 · `{"status":"ok"}` |
-| GET `/api/tarifas` | 200 · lista de tarifas | 200 · 5 conceptos (300, 600, 50, 80, 150) y moneda EUR |
+| 1 | landing, 1 página, sin extras | 200 · 300 € |
+| 2 | corporativa, 4 páginas, formulario | 200 · 830 € |
+| 3 | landing, 2 páginas, ambos extras | 200 · 580 € |
+| 4 | landing, 20 páginas | 200 · 1.250 € |
+| 5-7 | `paginas` 0, 21 y 2.5 | 400 · `["paginas"]` |
+| 8 | `tipo: "tienda"` | 400 · `["tipo"]` |
+| 9 | `formulario: "false"` | 400 · `["formulario"]` |
+| 10 | `paginas: "4"` (cadena) | 400 · `["paginas"]` |
+| 11 | falta `segundoIdioma` | 400 |
+| 12 | `total: 1, base: 0` | 200 · 300 € (se ignoran) |
+| 13 | sin `Content-Type: application/json` | 400 |
+| 14 | JSON mal formado `{malo` | 400 |
 
-### POST /api/presupuesto
+### Agente (`POST /api/agente`, OpenAI simulado)
 
-| Caso | Solicitud enviada | Resultado esperado | Resultado obtenido |
-|---|---|---|---|
-| 1 | `{"tipo":"landing","paginas":1,"formulario":false,"segundoIdioma":false}` | 200 · 300 € | 200 · base 300, páginas 0, formulario 0, idioma 0, **total 300** |
-| 2 | `{"tipo":"corporativa","paginas":4,"formulario":true,"segundoIdioma":false}` | 200 · 830 € | 200 · base 600, páginas 150, formulario 80, idioma 0, **total 830** |
-| 3 | `{"tipo":"landing","paginas":2,"formulario":true,"segundoIdioma":true}` | 200 · 580 € | 200 · base 300, páginas 50, formulario 80, idioma 150, **total 580** |
-| 4 | `{"tipo":"landing","paginas":20,"formulario":false,"segundoIdioma":false}` | 200 · 1.250 € | 200 · base 300, páginas 950, formulario 0, idioma 0, **total 1250** |
-| 5 | `{"tipo":"landing","paginas":0,"formulario":false,"segundoIdioma":false}` | 400 | 400 · campos `["paginas"]` · debe ser un número entero entre 1 y 20 |
-| 6 | `{"tipo":"landing","paginas":21,"formulario":false,"segundoIdioma":false}` | 400 | 400 · campos `["paginas"]` · debe ser un número entero entre 1 y 20 |
-| 7 | `{"tipo":"landing","paginas":2.5,"formulario":false,"segundoIdioma":false}` | 400 | 400 · campos `["paginas"]` · debe ser un número entero entre 1 y 20 |
-| 8 | `{"tipo":"tienda","paginas":2,"formulario":false,"segundoIdioma":false}` | 400 | 400 · campos `["tipo"]` · debe ser "landing" o "corporativa" |
-| 9 | `{"tipo":"landing","paginas":2,"formulario":"false","segundoIdioma":false}` | 400 | 400 · campos `["formulario"]` · debe ser un booleano (true o false) |
+| Caso | Situación | Esperado |
+|---|---|---|
+| P1 | Solicitud clara (clínica con 5 secciones y formulario de citas) | 200 · corporativa, 5 páginas, `corporativa,formulario` con justificaciones. La petición a OpenAI usa JSON schema estricto, el modelo de `OPENAI_MODEL` y la descripción como datos, y las instrucciones no contienen precios |
+| P2 | Solicitud ambigua ("una web para mi negocio") | 200 · `tipo` y `paginas` a `null`, `faltan: ["tipo","paginas"]`, con dudas |
+| P3 | Servicio no ofrecido (reservas con pago online) | 200 · solo `landing`; la reserva va a `pendientes` |
+| P4 | Descripción vacía | 400 · `["descripcion"]` y **no** se llama a OpenAI |
+| P4b | Cliente vacío y descripción de 4001 caracteres | 400 · `["cliente","descripcion"]` |
+| P5 | OpenAI responde con error 500 | 502 · `reintentar: true` |
+| P5b | OpenAI no responde | 502 por timeout ("ha tardado demasiado") en menos de 3 s (timeout de prueba: 300 ms) |
+| P5c | El modelo devuelve algo que no es JSON | 502 |
+| P5d | Falta `OPENAI_API_KEY` | 502 · "no está configurado" |
+| P6 | Id inventado (`tiendaOnline`), dos tipos de web, id repetido y 99 páginas | 200 · `corporativa,formulario`; `descartados` incluye `tiendaOnline` y `landing`; `paginas: null` |
+
+### PDF (`POST /api/presupuesto/pdf`)
+
+| Caso | Situación | Esperado |
+|---|---|---|
+| PDF1 | Selección **modificada** respecto a la propuesta (quita formulario, añade segundo idioma, pasa de 5 a 6 páginas) y con `total: 1` y `precios` falsos | 200 · `application/pdf` que empieza por `%PDF-` · total **1.000 €** (600 + 5 × 50 + 150) |
+| PDF2 | Misma selección en `POST /api/presupuesto` | Mismo total, 1.000 € |
+| PDF3 | `seleccion.paginas: 0` | 400 · `["seleccion.paginas"]` |
+| PDF4 | Cliente vacío | 400 · `["cliente"]` |
 
 ### Estados de respuesta
 
 | Código | Significado |
 |---|---|
-| 200 | Cálculo atendido correctamente |
-| 400 | Solicitud que incumple el contrato (no se calcula nada) |
-| 404 | Ruta inexistente (`{"error":"Ruta no encontrada"}`) |
-| 500 | Fallo interno inesperado del servicio |
-
-### Pruebas extra
-
-Los casos 10 a 12 se ejecutan con `npm test`; los casos 13 y 14 se han comprobado con `curl`.
-
-| Caso | Solicitud enviada | Resultado esperado | Resultado obtenido |
-|---|---|---|---|
-| 10 | `{"tipo":"landing","paginas":"4","formulario":false,"segundoIdioma":false}` (páginas como texto) | 400 | 400 · campos `["paginas"]` · debe ser un número entero entre 1 y 20 |
-| 11 | `{"tipo":"landing","paginas":2,"formulario":false}` (falta `segundoIdioma`) | 400 | 400 · campos `["segundoIdioma"]` · Falta el campo obligatorio "segundoIdioma" |
-| 12 | `{"tipo":"landing","paginas":1,"formulario":false,"segundoIdioma":false,"total":1,"base":0}` (intenta imponer el total) | 200 · 300 € (se ignoran `total` y `base`) | 200 · **total 300** |
-| 13 | Cuerpo del caso 1 sin la cabecera `Content-Type: application/json` | 400 | 400 · La petición debe usar la cabecera Content-Type: application/json |
-| 14 | JSON mal formado: `{malo` | 400 | 400 · El JSON enviado no es válido |
+| 200 | Petición atendida correctamente |
+| 400 | La solicitud incumple el contrato (no se calcula nada ni se llama a OpenAI) |
+| 413 | Cuerpo de más de 50 KB |
+| 404 | Ruta inexistente |
+| 502 | El servicio de IA no está disponible, ha tardado demasiado o ha devuelto una respuesta no válida |
 
 ---
 
-## Cómo funciona
+## Estructura del proyecto
 
-### Una validación: `paginas`
-
-```js
-if (typeof paginas !== 'number' || !Number.isInteger(paginas) || paginas < 1 || paginas > 20)
 ```
-
-1. `typeof paginas !== 'number'` rechaza el texto `"4"`, aunque parezca un número.
-2. `!Number.isInteger(paginas)` rechaza decimales como `2.5`.
-3. `paginas < 1 || paginas > 20` rechaza `0` y `21`.
-
-Si alguna condición falla, la ruta responde **400** y **no llama** a la función de cálculo.
-
-### Cálculo del caso 2 (corporativa, 4 páginas, con formulario)
-
-La función `calcularPresupuesto()` de `src/calculo.js` recibe los datos ya validados:
-
-| Concepto | Operación | Importe |
-|---|---|---|
-| Base | tarifa de web corporativa | 600 € |
-| Páginas adicionales | (4 − 1) × 50 = 3 × 50 | 150 € |
-| Formulario | `true`, se suma 80 | 80 € |
-| Segundo idioma | `false`, se suma 0 | 0 € |
-| **Total** | 600 + 3 × 50 + 80 + 0 | **830 €** |
-
-### Por qué el cliente no puede cambiar las tarifas
-
-- Las tarifas están en `src/tarifas.js` protegidas con `Object.freeze`, así que no se pueden modificar mientras el servidor está en marcha.
-- La validación devuelve solo los cuatro campos permitidos (`tipo`, `paginas`, `formulario` y `segundoIdioma`). Cualquier otra propiedad que envíe el cliente, como `total` o `precio`, se descarta antes de calcular (caso 12).
+presupuesta-mi-web/
+├── README.md
+├── .gitignore
+└── web/                          # Único proyecto (Root Directory en Vercel)
+    ├── package.json              # Scripts: dev, build, start, lint, typecheck, test
+    ├── .env.example              # OPENAI_API_KEY y OPENAI_MODEL (sin valores)
+    ├── next.config.ts            # serverExternalPackages: ["pdfkit"]
+    ├── app/
+    │   ├── page.tsx, layout.tsx, globals.css
+    │   └── api/
+    │       ├── estado/route.ts
+    │       ├── tarifas/route.ts
+    │       ├── catalogo/route.ts
+    │       ├── presupuesto/route.ts
+    │       ├── presupuesto/pdf/route.ts
+    │       └── agente/route.ts   # Instrucciones, schema y llamada a OpenAI
+    ├── lib/                      # tarifas, catalogo, validacion, calculo, propuesta, pdf, http, api
+    ├── components/
+    │   ├── panel-presupuesto.tsx # Cabecera, selector de modo y ticket
+    │   ├── asistente-ia.tsx      # Proyecto → Propuesta → PDF
+    │   ├── formulario-presupuesto.tsx  # Modo manual
+    │   ├── resultado-presupuesto.tsx   # Ticket
+    │   └── ui/                   # Componentes de shadcn/ui
+    └── pruebas/pruebas.ts        # npm test (OpenAI simulado)
+```
 
 ---
 
@@ -308,8 +324,9 @@ La función `calcularPresupuesto()` de `src/calculo.js` recibe los datos ya vali
 
 | Problema | Causa y solución |
 |---|---|
-| `npm` no se reconoce como comando | Node.js no está instalado. Instala Node.js 18 o superior y vuelve a abrir la terminal. |
-| `Error: listen EADDRINUSE ... :3000` | El puerto 3000 ya está ocupado (por ejemplo, la API ya está arrancada en otra terminal). Cierra esa terminal con `Ctrl + C` o arranca en otro puerto con la variable `PORT`. |
-| `Cannot find module 'express'` | Falta instalar las dependencias. Ejecuta `npm install` en la raíz del proyecto. |
-| El POST da error en PowerShell con `curl` | En PowerShell, `curl` no es el mismo programa. Usa el ejemplo con `Invoke-RestMethod` o abre CMD. |
-| La interfaz muestra "Sin conexión" | La API no está arrancada. Ejecuta `npm start` en la raíz (terminal 1) y pulsa la pastilla de estado para volver a comprobar. |
+| El agente responde "no está configurado" | Faltan `OPENAI_API_KEY` u `OPENAI_MODEL` en `web/.env.local` (en local) o en las variables del proyecto de Vercel. Tras cambiarlas, reinicia `npm run dev` o vuelve a desplegar. |
+| El agente responde "no ha respondido correctamente" | Clave no válida, sin saldo o un modelo que no admite JSON schema. El detalle aparece en el registro del servidor (terminal o *Logs* de Vercel). |
+| `npm install` avisa de la versión de Node | El SDK de OpenAI necesita Node 22 o superior. |
+| `Error: listen EADDRINUSE ... :3001` | El puerto ya está ocupado. Cierra la otra terminal o usa `npx next dev -p 3002`. |
+| Las tildes salen como `?` al probar con `curl` en Windows | La consola envía el cuerpo con otra codificación. Guarda el JSON en un archivo UTF-8 y usa `curl --data-binary @archivo.json`. La interfaz web siempre envía UTF-8. |
+| La vista previa del PDF no se ve en el móvil | Algunos navegadores móviles no muestran PDF dentro de la página. Usa "Abrir la vista previa en otra pestaña" o "Descargar PDF". |
