@@ -12,7 +12,7 @@ La IA solo **propone y redacta**. La validación, los precios y los totales se c
 
 | Carpeta | Instalar | Ejecutar | Pruebas | Puerto |
 |---|---|---|---|---|
-| `web/` | `npm install` | `npm run dev` | `npm test` | 3001 (`http://localhost:3001`) |
+| `web/` | `npm install` | `npm run dev` | `npm test` | 3000 (`http://localhost:3000`) |
 
 Todo (interfaz y API) es **un solo proyecto de Next.js** en `web/`. Ya no hay servidor Express.
 
@@ -34,7 +34,7 @@ cp .env.example .env.local      # PowerShell: Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Abre `http://localhost:3001`. Para producción en local: `npm run build` y `npm start`.
+Abre `http://localhost:3000`. Para producción en local: `npm run build` y `npm start`.
 
 ### Variables de entorno
 
@@ -327,6 +327,6 @@ presupuesta-mi-web/
 | El agente responde "no está configurado" | Faltan `OPENAI_API_KEY` u `OPENAI_MODEL` en `web/.env.local` (en local) o en las variables del proyecto de Vercel. Tras cambiarlas, reinicia `npm run dev` o vuelve a desplegar. |
 | El agente responde "no ha respondido correctamente" | Clave no válida, sin saldo o un modelo que no admite JSON schema. El detalle aparece en el registro del servidor (terminal o *Logs* de Vercel). |
 | `npm install` avisa de la versión de Node | El SDK de OpenAI necesita Node 22 o superior. |
-| `Error: listen EADDRINUSE ... :3001` | El puerto ya está ocupado. Cierra la otra terminal o usa `npx next dev -p 3002`. |
+| `Error: listen EADDRINUSE ... :3000` | El puerto ya está ocupado. Cierra la otra terminal o usa `npx next dev -p 3001`. |
 | Las tildes salen como `?` al probar con `curl` en Windows | La consola envía el cuerpo con otra codificación. Guarda el JSON en un archivo UTF-8 y usa `curl --data-binary @archivo.json`. La interfaz web siempre envía UTF-8. |
 | La vista previa del PDF no se ve en el móvil | Algunos navegadores móviles no muestran PDF dentro de la página. Usa "Abrir la vista previa en otra pestaña" o "Descargar PDF". |
